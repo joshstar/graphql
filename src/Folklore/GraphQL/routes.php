@@ -2,7 +2,21 @@
 
 use Illuminate\Http\Request;
 
-$graphqlRoutes = function ($router) {
+$schemaParameterPattern = '/\{\s*graphql\_schema\s*\?\s*\}/';
+
+//GraphiQL
+$graphiQL = config('graphql.graphiql', true);
+if ($graphiQL) {
+    $graphiQLRoute = config('graphql.graphiql.routes', 'graphiql');
+    $graphiQLController = config('graphql.graphiql.controller', '\Folklore\GraphQL\GraphQLController@graphiql');
+    $router->get($graphiQLRoute, [
+        'as' => 'graphql.graphiql',
+        'middleware' => config('graphql.graphiql.middleware', []),
+        'uses' => $graphiQLController
+    ]);
+}
+
+$graphqlRoutes = function ($router) use ($schemaParameterPattern) {
     //Get routes from config
     $routes = config('graphql.routes');
     $queryRoute = null;
@@ -27,7 +41,6 @@ $graphqlRoutes = function ($router) {
         $mutationController = $controllers;
     }
 
-    $schemaParameterPattern = '/\{\s*graphql\_schema\s*\?\s*\}/';
     //Query
     if ($queryRoute) {
         // Remove optional parameter in Lumen. Instead, creates two routes.
@@ -102,14 +115,4 @@ foreach (config('graphql.prefix') as $prefix) {
         'prefix' => $prefix,
         'middleware' => config('graphql.middleware', [])
     ], $graphqlRoutes);
-}
-
-//GraphiQL
-$graphiQL = config('graphql.graphiql', true);
-if ($graphiQL) {
-    $router->get(config('graphql.graphiql.routes', 'graphiql'), [
-        'as' => 'graphql.graphiql',
-        'middleware' => config('graphql.graphiql.middleware', []),
-        'uses' => config('graphql.graphiql.controller')
-    ]);
 }
