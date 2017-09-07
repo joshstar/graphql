@@ -269,21 +269,27 @@ class GraphQL
     public static function formatError(Error $e)
     {
         $error = [
-            'message' => $e->getMessage()
+            'message' => $e->getMessage(),
+            'status' => 400
         ];
-
+        
         $locations = $e->getLocations();
         if (!empty($locations)) {
             $error['locations'] = array_map(function ($loc) {
                 return $loc->toArray();
             }, $locations);
         }
-
+        
         $previous = $e->getPrevious();
-        if ($previous && $previous instanceof ValidationError) {
-            $error['validation'] = $previous->getValidatorMessages();
+        if ($previous) {
+            if ($previous instanceof ValidationError) {
+                $error['validation'] = $previous->getValidatorMessages();
+            }
+            if (method_exists($previous, 'getStatusCode')) {
+                $error['status'] = (int) $previous->getStatusCode();
+            }
         }
-
+        
         return $error;
     }
 }
